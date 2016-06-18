@@ -32,7 +32,7 @@ public class MainActivity extends ActionBarActivity {
         setContentView(R.layout.activity_main);
         if (savedInstanceState == null) {
             getSupportFragmentManager().beginTransaction()
-                    .add(R.id.container, new PlaceholderFragment())
+                    .add(R.id.container, new ForecastFragment())
                     .commit();
         }
     }
@@ -59,101 +59,4 @@ public class MainActivity extends ActionBarActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    /**
-     * A placeholder fragment containing a simple view.
-     */
-    public static class PlaceholderFragment extends Fragment {
-
-        ArrayAdapter<String> mForecastAdapter;
-
-        public PlaceholderFragment() {
-        }
-
-        @Override
-        public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                                 Bundle savedInstanceState) {
-
-            // create some fake data for the ListView
-            String[] forecastArray = {
-                    "Today - Sunny - 88/63",
-                    "Tomorrow - Tornado - 70/40",
-                    "Weds - Storm - 20/10",
-                    "Thurs - Flood - 40/20",
-                    "Fri - Thunder - 50/30",
-                    "Sat - Cloudy - 60/45",
-                    "Sun - Heavy Rain - 40/39"
-            };
-
-            List<String> weekForecast = new ArrayList<>(Arrays.asList(forecastArray));
-
-            // Now that we have some dummy forecast data, create an ArrayAdapter.
-            // The ArrayAdapter will take data from a source (like our dummy forecast) and
-            // use it to populate the ListView it's attached to.
-            mForecastAdapter = new ArrayAdapter<String>(
-                    // The current context (this activity)
-                    getActivity(),
-                    // The name of the layout ID.
-                    R.layout.list_item_forecast,
-                    // The ID of the textview to populate.
-                    R.id.list_item_forecast_textview,
-                    // Forecast data
-                    weekForecast
-            );
-            View rootView = inflater.inflate(R.layout.fragment_main, container, false);
-
-
-            // Get a reference to the ListView, and attach this adapter to it.
-            ListView listView = (ListView) rootView.findViewById(R.id.listview_forecast);
-            listView.setAdapter(mForecastAdapter);
-
-            // These two need to be declared outside the try/catch
-            // so that they can be closed in the finally block
-            HttpURLConnection urlConnection = null;
-            BufferedReader reader = null;
-
-            // Will contain the raw JSON response as a string.
-            String forecastJsonStr = null;
-
-            try {
-                // Construct the URL for the OpenWeatherMap query
-                // Possible parameters are available at OWM's forecast API page, at
-                // http://openweathermap.org/API#forecast
-                String baseUrl = "http://api.openweathermap.org/data/2.5/forecast/daily?q=94043&mode=json&units=metric&cnt=7";
-                String apiKey = "&APPID=" + BuildConfig.OPEN_WEATHER_MAP_API_KEY;
-                URL url = new URL(baseUrl.concat(apiKey));
-
-                // Create the request to OpenWeatherMap, and open the connection
-                urlConnection = (HttpURLConnection) url.openConnection();
-                urlConnection.setRequestMethod("GET");
-                urlConnection.connect();
-
-                // Read the input stream into a String
-                InputStream inputStream = urlConnection.getInputStream();
-                StringBuffer buffer = new StringBuffer();
-                if (inputStream == null) {
-                    // Nothing to do.
-                    return null;
-                }
-                forecastJsonStr = buffer.toString();
-            } catch (IOException e) {
-                Log.e("PlaceholderFragment", "Error", e);
-                // If the code didn't successfully get the weather data, there's no point in attempting
-                // to parse it.
-                return null;
-            } finally {
-                if (urlConnection != null) {
-                    urlConnection.disconnect();
-                }
-                if (reader != null) {
-                    try {
-                        reader.close();
-                    } catch (final IOException e) {
-                        Log.e("PlaceholderFragment", "Error closing stream", e);
-                    }
-                }
-            }
-
-            return rootView;
-        }
-    }
-}
+ }

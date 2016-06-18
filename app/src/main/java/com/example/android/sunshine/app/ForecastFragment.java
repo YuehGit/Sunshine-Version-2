@@ -1,0 +1,121 @@
+package com.example.android.sunshine.app;
+
+/**
+ * Created by yue on 6/18/16.
+ */
+
+import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+/**
+ * Encapsulates fetching the forecast and displaying it as a {@link ListView} layout.
+ */
+public static class ForecastFragment extends Fragment {
+
+    ArrayAdapter<String> mForecastAdapter;
+
+    public ForecastFragment() {
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+
+        // create some fake data for the ListView
+        String[] forecastArray = {
+                "Today - Sunny - 88/63",
+                "Tomorrow - Tornado - 70/40",
+                "Weds - Storm - 20/10",
+                "Thurs - Flood - 40/20",
+                "Fri - Thunder - 50/30",
+                "Sat - Cloudy - 60/45",
+                "Sun - Heavy Rain - 40/39"
+        };
+
+        List<String> weekForecast = new ArrayList<>(Arrays.asList(forecastArray));
+
+        // Now that we have some dummy forecast data, create an ArrayAdapter.
+        // The ArrayAdapter will take data from a source (like our dummy forecast) and
+        // use it to populate the ListView it's attached to.
+        mForecastAdapter = new ArrayAdapter<String>(
+                // The current context (this activity)
+                getActivity(),
+                // The name of the layout ID.
+                R.layout.list_item_forecast,
+                // The ID of the textview to populate.
+                R.id.list_item_forecast_textview,
+                // Forecast data
+                weekForecast
+        );
+        View rootView = inflater.inflate(R.layout.fragment_main, container, false);
+
+
+        // Get a reference to the ListView, and attach this adapter to it.
+        ListView listView = (ListView) rootView.findViewById(R.id.listview_forecast);
+        listView.setAdapter(mForecastAdapter);
+
+        // These two need to be declared outside the try/catch
+        // so that they can be closed in the finally block
+        HttpURLConnection urlConnection = null;
+        BufferedReader reader = null;
+
+        // Will contain the raw JSON response as a string.
+        String forecastJsonStr = null;
+
+        try {
+            // Construct the URL for the OpenWeatherMap query
+            // Possible parameters are available at OWM's forecast API page, at
+            // http://openweathermap.org/API#forecast
+            String baseUrl = "http://api.openweathermap.org/data/2.5/forecast/daily?q=94043&mode=json&units=metric&cnt=7";
+            String apiKey = "&APPID=" + BuildConfig.OPEN_WEATHER_MAP_API_KEY;
+            URL url = new URL(baseUrl.concat(apiKey));
+
+            // Create the request to OpenWeatherMap, and open the connection
+            urlConnection = (HttpURLConnection) url.openConnection();
+            urlConnection.setRequestMethod("GET");
+            urlConnection.connect();
+
+            // Read the input stream into a String
+            InputStream inputStream = urlConnection.getInputStream();
+            StringBuffer buffer = new StringBuffer();
+            if (inputStream == null) {
+                // Nothing to do.
+                return null;
+            }
+            forecastJsonStr = buffer.toString();
+        } catch (IOException e) {
+            Log.e("ForecastFragment", "Error", e);
+            // If the code didn't successfully get the weather data, there's no point in attempting
+            // to parse it.
+            return null;
+        } finally {
+            if (urlConnection != null) {
+                urlConnection.disconnect();
+            }
+            if (reader != null) {
+                try {
+                    reader.close();
+                } catch (final IOException e) {
+                    Log.e("ForecastFragment", "Error closing stream", e);
+                }
+            }
+        }
+
+        return rootView;
+    }
+}
